@@ -32,9 +32,9 @@ class BiLSTM(nn.Module):
         self.word_embed.weight.requires_grad = False
         # self.chara_embed = nn.RNN(128, 50)
         self.pos_embed = nn.Embedding(len(corpus.pos_tag_dict) + 1, 25)
-        self.lstm = nn.LSTM(input_size=50 + 25, hidden_size=n_hidden, bidirectional=True, batch_first=True)
+        self.lstm = nn.LSTM(input_size=50+25, hidden_size=n_hidden, bidirectional=True, batch_first=True)
         self.fc = nn.Linear(2 * n_hidden, len(corpus.label_dict) + 1)
-        self.drop = nn.Dropout(0.3)
+        self.drop = nn.Dropout(0.25)
 
     def load_pretrained(self, path):
         nn.init.constant(self.word_embed.weight, 0)

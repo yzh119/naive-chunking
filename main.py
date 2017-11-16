@@ -18,20 +18,20 @@ parser.add_argument()
 
 args = parser.parse_args()
 """
+torch.manual_seed(1111)
 
 n_epochs = 100
 corpus = utils.Corpus()
 
 logger = tmlog.Logger('LOG')
-train_batch = Batches('data/train.txt.gz', corpus.token_dict, corpus.pos_tag_dict, corpus.label_dict)
-test_batch = Batches('data/test.txt.gz', corpus.token_dict, corpus.pos_tag_dict, corpus.label_dict)
+train_batch = Batches('data/train.txt.gz', corpus.token_dict, corpus.pos_tag_dict, corpus.label_dict, batch_size=16)
+test_batch = Batches('data/test.txt.gz', corpus.token_dict, corpus.pos_tag_dict, corpus.label_dict, batch_size=128)
 
 model = BiLSTM(corpus, 200)
 model.cuda()
 model.load_pretrained('pretrained/glove.6B.50d.txt')
 lr = 1e-3
 
-peak = 0
 aver_acc = 0
 
 for epoch in range(n_epochs):
@@ -67,7 +67,7 @@ for epoch in range(n_epochs):
                 if pred_lbl == truth_lbl:
                     hit += 1
 
-    lr *= 0.96
+    lr = lr * 0.9 + 1e-5
     print "accuracy: {}".format(hit * 1.0 / tot)
 
 with open('output.txt', 'w') as f:
