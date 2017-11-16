@@ -37,3 +37,4 @@ models/__init__.pyc
 models/bilstm.pyc
 pretrained/glove.6B.50d.txt
 utils.pyc
+output.txt

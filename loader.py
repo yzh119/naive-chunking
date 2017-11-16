@@ -24,14 +24,13 @@ class Batches(object):
     def __iter__(self):
         random.shuffle(self.data)
         for i in range(0, len(self.data), self.batch_size):
-            max_len = -1
-            for row in self.data[i: i + self.batch_size]:
-                if len(row) > max_len:
-                    max_len = len(row)
+            batch = sorted(self.data[i: i + self.batch_size], key=lambda lst: len(lst), reverse=True)
+            max_len = len(batch[0])
             tokens = []
             pos_tags = []
             lbls = []
-            for row in self.data[i: i + self.batch_size]:
+            lengths = []
+            for row in batch:
                 row_tokens = []
                 row_pos_tags = []
                 row_lbls = []
@@ -39,10 +38,12 @@ class Batches(object):
                     row_tokens.append(token)
                     row_pos_tags.append(pos_tag)
                     row_lbls.append(lbl)
-                row_tokens.extend([0] * (max_len - len(row_tokens)))
-                row_pos_tags.extend([0] * (max_len - len(row_pos_tags)))
-                row_lbls.extend([0] * (max_len - len(row_lbls)))
+                lengths.append(len(row_tokens))
+                len_padding = max_len - lengths[-1]
+                row_tokens.extend([0] * len_padding)
+                row_pos_tags.extend([0] * len_padding)
+                row_lbls.extend([0] * len_padding)
                 tokens.append(row_tokens)
                 pos_tags.append(row_pos_tags)
                 lbls.append(row_lbls)
-            yield tokens, pos_tags, lbls
+            yield tokens, pos_tags, lbls, lengths
