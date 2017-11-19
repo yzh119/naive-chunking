@@ -17,7 +17,8 @@ class Corpus(object):
                 token = token.lower()
                 token_set.add(token)
                 pos_tag_set.add(pos_tag)
-                label_set.add(label)
+                if len(label) > 1:
+                    label_set.add(label[2:])
 
         with gzip.open('data/test.txt.gz', 'r') as f:
             for line in f:
@@ -28,7 +29,8 @@ class Corpus(object):
                 token = token.lower()
                 token_set.add(token)
                 pos_tag_set.add(pos_tag)
-                label_set.add(label)
+                if len(label) > 1:
+                    label_set.add(label[2:])
 
         self.tokens = {e:i for i, e in enumerate(list(token_set), 1)}
         self.pos_tags = {e:i for i, e in enumerate(list(pos_tag_set), 1)}
