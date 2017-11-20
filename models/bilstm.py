@@ -7,11 +7,12 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from tqdm import tqdm
 
 pretrained_dict = {}
-
+dim = 100
+dim_pos = 50
 
 def mean_embed(seq):
     cnt = 0
-    embed = torch.cuda.FloatTensor(50)
+    embed = torch.cuda.FloatTensor(dim)
     for token in seq:
         if len(token) == 0:
             continue
@@ -32,17 +33,19 @@ class BiLSTM(nn.Module):
         self.weight_type[0] = 0
         self.weight_bio = Variable(torch.ones(3 + 1).cuda())
         self.weight_bio[0] = 0
-        self.word_embed = nn.Embedding(len(corpus.token_dict) + 1, 50)
-        self.word_embed.weight.requires_grad = False
-        #self.chara_embed = nn.RNN(128, 50)
-        self.pos_embed = nn.Embedding(len(corpus.pos_tag_dict) + 1, 10)
-        self.lstm = nn.LSTM(input_size=50+10, hidden_size=n_hidden, bidirectional=True, num_layers=1, batch_first=True)
+        self.word_embed = nn.Embedding(len(corpus.token_dict) + 1, dim)
+        #self.word_embed.weight.requires_grad = False
+        # self.chara_embed = nn.RNN(128, 50)
+        self.pos_embed = nn.Embedding(len(corpus.pos_tag_dict) + 1, dim_pos)
+        self.lstm = nn.LSTM(input_size=dim+dim_pos, hidden_size=n_hidden, bidirectional=True, num_layers=3,
+                            batch_first=True)
         self.fc_bio = nn.Linear(2 * n_hidden, 3 + 1)
         self.fc_type = nn.Linear(2 * n_hidden, len(corpus.label_dict) + 1)
-        self.drop = nn.Dropout(0.5)
+        print corpus.label_dict
+        self.drop = nn.Dropout(0.6)
 
     def load_pretrained(self, path):
-        pretrained = torch.cuda.FloatTensor(len(self.corpus.token_dict) + 1, 50)
+        pretrained = torch.cuda.FloatTensor(len(self.corpus.token_dict) + 1, dim)
         nn.init.constant(self.word_embed.weight, 0)
         with open(path, 'r') as f:
             for line in f:
@@ -69,14 +72,14 @@ class BiLSTM(nn.Module):
         out, _ = pad_packed_sequence(hiddens, batch_first=True)
         out_type = self.fc_type(self.drop(out))
         out_bio = self.fc_bio(self.drop(out))
-        return (F.nll_loss(F.log_softmax(out_type).view(-1, len(self.corpus.label_dict) + 1), lbl_types.view(-1), weight=self.weight_type) +
+        return (F.nll_loss(F.log_softmax(out_type).view(-1, len(self.corpus.label_dict) + 1), lbl_types.view(-1),
+                           weight=self.weight_type) +
                 F.nll_loss(F.log_softmax(out_bio).view(-1, 3 + 1), lbl_bios.view(-1), weight=self.weight_bio))
-
 
     def predict(self, data, tags):
         word_input = self.word_embed(data)
         tag_input = self.pos_embed(tags)
-        input = torch.cat([word_input, tag_input], -1)
+        input = self.drop(torch.cat([word_input, tag_input], -1))
         hiddens = self.lstm(input)
         out_bio = self.fc_bio(hiddens[0])
         out_type = self.fc_type(hiddens[0])

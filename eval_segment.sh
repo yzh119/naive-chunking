@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 sudo chmod u+x data/conlleval
-data/conlleval < output.txt
+data/conlleval < output_bio.txt

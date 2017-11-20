@@ -38,3 +38,5 @@ models/bilstm.pyc
 pretrained/glove.6B.50d.txt
 utils.pyc
 output.txt
+output_bio.txt
+pretrained/glove.6B.300d.txt
