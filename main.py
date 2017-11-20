@@ -40,7 +40,7 @@ for epoch in range(n_epochs):
     model.train()
     aver_loss = 0
     for idx_batch, (data, tags, lbl_bios, lbl_types, lengths) in enumerate(train_batch):
-        data = Variable(torch.cuda.LongTensor(data))
+        #data = Variable(torch.cuda.LongTensor(data))
         tags = Variable(torch.cuda.LongTensor(tags))
         lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios))
         lbl_types = Variable(torch.cuda.LongTensor(lbl_types))
@@ -60,7 +60,7 @@ for epoch in range(n_epochs):
     tot = 0
     last_type = 0
     for data, tags, lbl_bios, lbl_types, lengths in test_batch:
-        data = Variable(torch.cuda.LongTensor(data), volatile=True)
+        #data = Variable(torch.cuda.LongTensor(data), volatile=True)
         tags = Variable(torch.cuda.LongTensor(tags), volatile=True)
         lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios), volatile=True)
         lbl_types = Variable(torch.cuda.LongTensor(lbl_types), volatile=True)
@@ -88,7 +88,7 @@ with open('output_bio.txt', 'w') as f:
 
     end = True
     for data, tags, lbl_bios, lbl_types, lengths in test_batch:
-        data = Variable(torch.cuda.LongTensor(data), volatile=True)
+        #data = Variable(torch.cuda.LongTensor(data), volatile=True)
         tags = Variable(torch.cuda.LongTensor(tags), volatile=True)
         lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios), volatile=True)
         lbl_types = Variable(torch.cuda.LongTensor(lbl_types), volatile=True)
@@ -130,7 +130,7 @@ with open('output.txt', 'w') as f:
 
     end = True
     for data, tags, lbl_bios, lbl_types, lengths in test_batch:
-        data = Variable(torch.cuda.LongTensor(data), volatile=True)
+        #data = Variable(torch.cuda.LongTensor(data), volatile=True)
         tags = Variable(torch.cuda.LongTensor(tags), volatile=True)
         lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios), volatile=True)
         lbl_types = Variable(torch.cuda.LongTensor(lbl_types), volatile=True)
