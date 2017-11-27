@@ -7,60 +7,79 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from tqdm import tqdm
 
 pretrained_dict = {}
-dim = 100
+dim = 50
 dim_pos = 50
+
 
 def mean_embed(seq):
     cnt = 0
-    embed = torch.cuda.FloatTensor(dim)
+    embed = torch.FloatTensor(dim)
     for token in seq:
         if len(token) == 0:
             continue
         if token not in pretrained_dict:
             continue
         cnt += 1.0
-        embed += torch.cuda.FloatTensor(pretrained_dict[token])
+        embed += torch.FloatTensor(pretrained_dict[token])
     if cnt == 0:
         return embed
     return embed / cnt
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, corpus, n_hidden):
+    def __init__(self, corpus, n_hidden, device_id):
         super(BiLSTM, self).__init__()
         self.corpus = corpus
-        self.weight_type = Variable(torch.ones(len(self.corpus.label_dict) + 1).cuda())
+        self.weight_type = Variable(torch.ones(len(self.corpus.label_dict) + 1).cuda(device_id))
         self.weight_type[0] = 0
-        self.weight_bio = Variable(torch.ones(3 + 1).cuda())
+        self.weight_bio = Variable(torch.ones(3 + 1).cuda(device_id))
         self.weight_bio[0] = 0
         self.word_embed = nn.Embedding(len(corpus.token_dict) + 1, dim)
-        #self.word_embed.weight.requires_grad = False
+        # self.word_embed.weight.requires_grad = False
         # self.chara_embed = nn.RNN(128, 50)
         self.pos_embed = nn.Embedding(len(corpus.pos_tag_dict) + 1, dim_pos)
-        self.lstm = nn.LSTM(input_size=dim+dim_pos, hidden_size=n_hidden, bidirectional=True, num_layers=3,
+        self.lstm = nn.LSTM(input_size=dim + dim_pos
+                            , hidden_size=n_hidden, bidirectional=True, num_layers=3,
                             batch_first=True)
         self.fc_bio = nn.Linear(2 * n_hidden, 3 + 1)
         self.fc_type = nn.Linear(2 * n_hidden, len(corpus.label_dict) + 1)
         print corpus.label_dict
-        self.drop = nn.Dropout(0.6)
+        self.drop = nn.Dropout(0.7)
 
-    def load_pretrained(self, path):
-        pretrained = torch.cuda.FloatTensor(len(self.corpus.token_dict) + 1, dim)
+    def load_pretrained(self, path, vocab_path=None):
+        pretrained = torch.FloatTensor(len(self.corpus.token_dict) + 1, dim)
         nn.init.constant(self.word_embed.weight, 0)
-        with open(path, 'r') as f:
-            for line in f:
-                row = line.split()
-                token = row[0]
-                embed = [float(x) for x in row[1:]]
-                pretrained_dict[token] = embed
+        if vocab_path == None:
+            with open(path, 'r') as f:
+                for line in f:
+                    row = line.split()
+                    token = row[0]
+                    embed = [float(x) for x in row[1:]]
+                    pretrained_dict[token] = embed
+        else:
+            token_lst = []
+            with open(vocab_path, 'r') as f:
+                for line in f:
+                    token = line.strip()
+                    token_lst.append(token)
+
+            with open(path, 'r') as f:
+                for token, line in zip(token_lst, f):
+                    row = line.split()
+                    embed = [float(x) for x in row]
+                    pretrained_dict[token] = embed
+
         cnt = 0
+        hit = 0
         for k, v in tqdm(self.corpus.token_dict.items()):
+            cnt += 1
             if k not in pretrained_dict:
-                cnt += 1
                 components = re.split('\_|\-|\/|\\|\;|\,|\.|\*|\n|\:|\&|\%', k)
                 pretrained[v] = mean_embed(components)
             else:
-                pass
+                hit += 1
+                pretrained[v] = torch.FloatTensor(pretrained_dict[k])
+        print hit * 1.0 / cnt
         self.word_embed.weight.data.copy_(pretrained)
 
     def forward(self, data, tags, lbl_bios, lbl_types, lengths):

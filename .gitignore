@@ -40,3 +40,5 @@ utils.pyc
 output.txt
 output_bio.txt
 pretrained/glove.6B.300d.txt
+/pretrained/embeddings.txt
+/pretrained/words.lst

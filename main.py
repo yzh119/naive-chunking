@@ -12,12 +12,14 @@ import json
 import time
 import logging
 
-"""
-parser = argparse.ArgumentParser("Chunking")
-parser.add_argument()
 
+parser = argparse.ArgumentParser("Chunking")
+parser.add_argument('--pretrained', '-p', type=str, default='senna')
+parser.add_argument('--device', '-d', type=int, default=1)
 args = parser.parse_args()
-"""
+
+pretrained_type = args.pretrained
+
 torch.manual_seed(1111)
 
 n_epochs = 100
@@ -27,9 +29,15 @@ corpus = utils.Corpus()
 train_batch = Batches('data/train.txt.gz', corpus.token_dict, corpus.pos_tag_dict, corpus.label_dict, batch_size=16)
 test_batch = Batches('data/test.txt.gz', corpus.token_dict, corpus.pos_tag_dict, corpus.label_dict, batch_size=128)
 
-model = BiLSTM(corpus, 200)
-model.cuda()
-# model.load_pretrained('pretrained/glove.6B.50d.txt')
+model = BiLSTM(corpus, 300, args.device)
+
+if pretrained_type == 'glove':
+    model.load_pretrained('pretrained/glove.6B.50d.txt')
+elif pretrained_type == 'senna':
+    model.load_pretrained('pretrained/embeddings.txt', 'pretrained/words.lst')
+
+model.cuda(args.device)
+
 lr = 1e-3
 
 aver_acc = 0
@@ -40,10 +48,10 @@ for epoch in range(n_epochs):
     model.train()
     aver_loss = 0
     for idx_batch, (data, tags, lbl_bios, lbl_types, lengths) in enumerate(train_batch):
-        data = Variable(torch.cuda.LongTensor(data))
-        tags = Variable(torch.cuda.LongTensor(tags))
-        lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios))
-        lbl_types = Variable(torch.cuda.LongTensor(lbl_types))
+        data = Variable(torch.LongTensor(data)).cuda(args.device)
+        tags = Variable(torch.LongTensor(tags)).cuda(args.device)
+        lbl_bios = Variable(torch.LongTensor(lbl_bios)).cuda(args.device)
+        lbl_types = Variable(torch.LongTensor(lbl_types)).cuda(args.device)
         loss = model(data, tags, lbl_bios, lbl_types, lengths)
         optimizer.zero_grad()
         loss.backward()
@@ -60,10 +68,10 @@ for epoch in range(n_epochs):
     tot = 0
     last_type = 0
     for data, tags, lbl_bios, lbl_types, lengths in test_batch:
-        data = Variable(torch.cuda.LongTensor(data), volatile=True)
-        tags = Variable(torch.cuda.LongTensor(tags), volatile=True)
-        lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios), volatile=True)
-        lbl_types = Variable(torch.cuda.LongTensor(lbl_types), volatile=True)
+        data = Variable(torch.LongTensor(data), volatile=True).cuda(args.device)
+        tags = Variable(torch.LongTensor(tags), volatile=True).cuda(args.device)
+        lbl_bios = Variable(torch.LongTensor(lbl_bios), volatile=True).cuda(args.device)
+        lbl_types = Variable(torch.LongTensor(lbl_types), volatile=True).cuda(args.device)
         pred_bios, pred_types = model.predict(data, tags)
 
         for pred_lbl_bio, pred_lbl_type, truth_lbl_bio, truth_lbl_type in zip(pred_bios.view(-1).data, pred_types.view(-1).data,
