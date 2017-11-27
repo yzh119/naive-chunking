@@ -45,6 +45,7 @@ class BiLSTM(nn.Module):
         self.fc_type = nn.Linear(2 * n_hidden, len(corpus.label_dict) + 1)
         print corpus.label_dict
         self.drop = nn.Dropout(0.7)
+        self.drop1 = nn.Dropout(0.3)
 
     def load_pretrained(self, path, vocab_path=None):
         pretrained = torch.FloatTensor(len(self.corpus.token_dict) + 1, dim)
@@ -85,7 +86,7 @@ class BiLSTM(nn.Module):
     def forward(self, data, tags, lbl_bios, lbl_types, lengths):
         word_input = self.word_embed(data)
         tag_input = self.pos_embed(tags)
-        input = torch.cat([word_input, tag_input], -1)
+        input = self.drop1(torch.cat([word_input, tag_input], -1))
         packed = pack_padded_sequence(input, lengths, batch_first=True)
         hiddens = self.lstm(packed)[0]
         out, _ = pad_packed_sequence(hiddens, batch_first=True)
@@ -98,7 +99,7 @@ class BiLSTM(nn.Module):
     def predict(self, data, tags):
         word_input = self.word_embed(data)
         tag_input = self.pos_embed(tags)
-        input = self.drop(torch.cat([word_input, tag_input], -1))
+        input = self.drop1(torch.cat([word_input, tag_input], -1))
         hiddens = self.lstm(input)
         out_bio = self.fc_bio(hiddens[0])
         out_type = self.fc_type(hiddens[0])

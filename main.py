@@ -15,14 +15,14 @@ import logging
 
 parser = argparse.ArgumentParser("Chunking")
 parser.add_argument('--pretrained', '-p', type=str, default='senna')
-parser.add_argument('--device', '-d', type=int, default=1)
+parser.add_argument('--device', '-d', type=int, default=0)
 args = parser.parse_args()
 
 pretrained_type = args.pretrained
 
 torch.manual_seed(1111)
 
-n_epochs = 100
+n_epochs = 30
 corpus = utils.Corpus()
 
 #logger = tmlog.Logger('LOG')
@@ -44,6 +44,7 @@ aver_acc = 0
 
 for epoch in range(n_epochs):
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr)
+    #optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=1)
     print "Epoch {}: ".format(epoch),
     model.train()
     aver_loss = 0
@@ -96,10 +97,10 @@ with open('output_bio.txt', 'w') as f:
 
     end = True
     for data, tags, lbl_bios, lbl_types, lengths in test_batch:
-        data = Variable(torch.cuda.LongTensor(data), volatile=True)
-        tags = Variable(torch.cuda.LongTensor(tags), volatile=True)
-        lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios), volatile=True)
-        lbl_types = Variable(torch.cuda.LongTensor(lbl_types), volatile=True)
+        data = Variable(torch.LongTensor(data), volatile=True).cuda(args.device)
+        tags = Variable(torch.LongTensor(tags), volatile=True).cuda(args.device)
+        lbl_bios = Variable(torch.LongTensor(lbl_bios), volatile=True).cuda(args.device)
+        lbl_types = Variable(torch.LongTensor(lbl_types), volatile=True).cuda(args.device)
         pred_bios, pred_types = model.predict(data, tags)
 
         for token, tag, pred_lbl_bio, pred_lbl_type, truth_lbl_bio, truth_lbl_type in \
@@ -138,10 +139,10 @@ with open('output.txt', 'w') as f:
 
     end = True
     for data, tags, lbl_bios, lbl_types, lengths in test_batch:
-        data = Variable(torch.cuda.LongTensor(data), volatile=True)
-        tags = Variable(torch.cuda.LongTensor(tags), volatile=True)
-        lbl_bios = Variable(torch.cuda.LongTensor(lbl_bios), volatile=True)
-        lbl_types = Variable(torch.cuda.LongTensor(lbl_types), volatile=True)
+        data = Variable(torch.LongTensor(data), volatile=True).cuda(args.device)
+        tags = Variable(torch.LongTensor(tags), volatile=True).cuda(args.device)
+        lbl_bios = Variable(torch.LongTensor(lbl_bios), volatile=True).cuda(args.device)
+        lbl_types = Variable(torch.LongTensor(lbl_types), volatile=True).cuda(args.device)
         pred_bios, pred_types = model.predict(data, tags)
 
         for token, tag, pred_lbl_bio, pred_lbl_type, truth_lbl_bio, truth_lbl_type in \

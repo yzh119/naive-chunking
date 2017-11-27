@@ -1,10 +1,9 @@
 # naive-chunking
 Evaluate the embedding's performance on CONLL-2000 chunking dataset.
 
-
 ## Usage
 
-Using GLoVe Embedding:
+Using GloVe Embedding:
 
     bash data/download.sh
     bash pretrained/download.sh
@@ -14,14 +13,10 @@ Using GLoVe Embedding:
 
 ## Result
 
-Without pretrained embedding:
-
 |              | acc   | fb1   |
 |--------------|-------|-------|
-| segmentation | 97.11 | 94.64 |
-| labeling     | 95.46 | 92.50 |
+| no pretrain  | 94.69 | 91.39 |
+| GloVe        | 95.67 | 92.92 |
+| Senna        | 96.37 | 94.08 |
 
-Using GLoVe Embedding:
-
-Using Senna Embedding:
 
